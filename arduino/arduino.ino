@@ -3,6 +3,10 @@
 #include <ESP8266HTTPClient.h>
 #include <DHT.h>
 
+#define REDPIN D5
+#define YELLOWPIN D6
+#define GREENPIN D7
+
 // Replace with your WiFi SSID and Password
 const char* ssid = "rosify";
 const char* password = "12345678";
@@ -75,6 +79,11 @@ void setup() {
   // Connect to WiFi
   connectToWiFi();
 
+  // LED
+  pinMode(REDPIN, OUTPUT);
+  pinMode(YELLOWPIN, OUTPUT);
+  pinMode(GREENPIN, OUTPUT);
+
   // Initialize the DHT sensor
   dht.begin();
 }
@@ -92,9 +101,28 @@ void loop() {
   Serial.print(humidity, 2);  // Print humidity with 2 decimal places
   Serial.println(" %");
 
+  if (temperature > 50) {
+    digitalWrite(REDPIN, HIGH);
+    digitalWrite(YELLOWPIN, LOW);
+    digitalWrite(GREENPIN, LOW);
+  } else if (temperature > 30 && temperature < 50) {
+    digitalWrite(YELLOWPIN, HIGH);
+    digitalWrite(REDPIN, LOW);
+    digitalWrite(GREENPIN, LOW);
+  } else if (temperature < 30) {
+    digitalWrite(GREENPIN, HIGH);
+    digitalWrite(YELLOWPIN, LOW);
+    digitalWrite(REDPIN, LOW);
+  } else {
+    digitalWrite(GREENPIN, LOW);
+    digitalWrite(YELLOWPIN, LOW);
+    digitalWrite(REDPIN, LOW);
+  }
+
   // Send data to the server
   sendDataToServer(temperature, humidity);
 
   // Wait for 5 seconds before sending data again
   delay(5000);
+  digitalWrite(REDPIN, LOW);
 }

@@ -75,6 +75,18 @@ def make_prediction(temperature: float, timestamp: str):
         "timestamp": new_timestamp.strftime('%Y-%m-%d %H:%M:%S')
     }
 
+async def get_all_data():
+    """Fetch all temperature and humidity data from the database."""
+    try:
+        conn = await get_db_connection()
+        async with conn.cursor(aiomysql.DictCursor) as cursor:
+            await cursor.execute("SELECT temperature, humidity, timestamp FROM dht11")
+            result = await cursor.fetchall()
+        conn.close()
+        return result
+    except aiomysql.MySQLError as err:
+        raise HTTPException(status_code=500, detail=f"MySQL error: {err}")
+
 async def get_latest_data():
     """Fetch the latest temperature and humidity data from the database."""
     try:
@@ -86,6 +98,15 @@ async def get_latest_data():
         return result
     except aiomysql.MySQLError as err:
         raise HTTPException(status_code=500, detail=f"MySQL error: {err}")
+    
+# Endpoint to get all temperature & humidity data
+@app.get("/all_data")
+async def fetch_all_data():
+    """Fetch all temperature and humidity data from the database."""
+    all_data = await get_all_data()
+    if not all_data:
+        raise HTTPException(status_code=404, detail="No temperature data found in the database.")
+    return {"status": "success", "data": all_data}
 
 # Endpoint to get latest temperature & humidity data
 @app.get("/latest_data")
